@@ -1,0 +1,14 @@
+node_modules/
+oh_modules/
+local.properties
+.idea/
+.vscode/
+**/build/
+**/.cxx/
+**/BuildProfile.ets
+**/oh-package-lock.json5
+.hvigor/
+.preview/
+*.hap
+*.app
+.DS_Store

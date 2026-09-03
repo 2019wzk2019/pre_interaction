@@ -1,0 +1,9 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "GripReach entry module",
+  "main": "",
+  "author": "preinteract",
+  "license": "Apache-2.0",
+  "dependencies": {}
+}

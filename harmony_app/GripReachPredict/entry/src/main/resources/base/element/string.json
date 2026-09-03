@@ -1,0 +1,20 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "Grip reach entry"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "GripReach entry ability"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "GripReach"
+    },
+    {
+      "name": "perm_sensor_reason",
+      "value": "需要加速度计与陀螺仪以运行 IMU 预测"
+    }
+  ]
+}
