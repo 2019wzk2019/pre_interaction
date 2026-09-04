@@ -10,12 +10,8 @@ venv/
 .DS_Store
 Thumbs.db
 
-harmony_app/**/.cache/
-harmony_app/**/build/
-harmony_app/**/.hvigor/
-harmony_app/**/oh_modules/
-harmony_app/**/node_modules/
-harmony_app/**/.cxx/
+# HAP stays local / private; do not push colleague or vendor app code
+harmony_app/
 *.hap
 *.app
 
