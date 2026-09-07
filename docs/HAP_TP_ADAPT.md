@@ -2,7 +2,8 @@
 
 > **读者**：你手里只有**旧版 HAP 工程**，看不到训练仓 / 新代码 diff。  
 > **目标**：只靠本文 + 对方发来的 `tp_model.json`，把工程改到能跑新模型。  
-> **一句话**：必须 **换模型文件 + 改特征提取代码**；只换 JSON 不够。
+> **本包模型（2026-09）**：**截长边 1021 维，不做窗内 2–98 正则**。JSON 里必须是 `"robust_p2_p98": false`。  
+> **一句话**：必须 **换模型文件 + 改特征提取代码**；只换 JSON 不够。若代码里仍做 p2–p98，维数对了预测也会全错。
 
 ---
 
@@ -22,20 +23,21 @@
 ```text
 "feature_dim": 1021
 "tp_edge_only": true
-"robust_p2_p98": true
+"robust_p2_p98": false
 ```
 
-若仍是 `"feature_dim": 1127`，这是**旧全量模型**，不要用，让对方重发。
+- 若 `"feature_dim": 1127`：旧全量模型，不要用。  
+- 若 `"robust_p2_p98": true`：这是带 2–98 正则的另一版，**不能**和本文代码混用。
 
 ---
 
 ## 1. 新旧差异（为什么旧 HAP 会挂）
 
-| | 旧（你现在的 HAP） | 新（要对齐的） |
+| | 旧（你现在的 HAP） | 本包要对齐的 |
 |--|--|--|
-| 特征维 | **1127** | **1021** |
+| 特征维 | **1127**（或已改 1021 但带 p2–p98） | **1021** |
 | 网格用法 | 全屏 34×21 + LineData | **只留左右长边各 3 列**，LineData **不用** |
-| 归一化 | 无窗内 2–98 | **每个 150ms 窗内**对积分/差分做 p2–p98 → [0,1] |
+| 归一化 | 可能做了窗内 2–98 | **不要做 p2–p98**；截边后直接算统计特征 |
 | 输入帧 | 整帧差分 | **不变**：仍喂整帧 `34×21 + 55`，裁边在特征里做 |
 
 典型报错：
@@ -102,19 +104,17 @@ abs[f] = abs[f-1] + diff[f]   (f = 1..10)
 
 内圈与 LineData **全部丢弃**。
 
-### 3.5 窗内 2–98 归一化（积分、差分各做一次）
+### 3.5 不要做窗内 2–98
 
-对「本窗所有帧的 204 维」展平后：
+本包模型在训练时**没有**对窗内积分/差分做 p2–p98 → [0,1]。
 
-1. 算百分位 `p2`、`p98`（线性插值，见第 4 节 `percentile`）
-2. 若 `p98 <= p2`，令 `p98 = p2 + 1`
-3. `v = clip((x - p2) / (p98 - p2), 0, 1)`
-
-**禁止**用整段录音或训练集全局分位数（真机没有未来数据）。
+- **不要**调用 `robustUnitInPlace` / 百分位拉伸。  
+- 截长边之后，用原始相对积分值和差分直接拼 3.6 的统计量。  
+- JSON 里的 `scaler_mean` / `scaler_scale` 仍由 `RandomForestInfer` 使用，那是特征拼完之后的 StandardScaler，**不是** p2–p98。
 
 ### 3.6 拼 1021 维（顺序不可改）
 
-设 `edgeAbs[f][i]`、`edgeDiff[f][i]` 已是归一化后；`F=11`，`E=204`。
+设 `edgeAbs[f][i]`、`edgeDiff[f][i]` 为截边后的窗内积分 / 差分（**未**做 p2–p98）；`F=11`，`E=204`。
 
 | 顺序 | 内容 | 维数 |
 |------|------|------|
@@ -143,7 +143,7 @@ entry/src/main/ets/model/TpFeatures.ets
 **建议整文件覆盖**为下面内容（与训练侧对齐，可直接编译）：
 
 ```ts
-/** TP window features — long-edge 3 layers + window p2–p98 → 1021 dims */
+/** TP window features — long-edge 3 layers, NO p2–p98, 1021 dims */
 
 export class TpFeatureExtractor {
   static readonly GRID_ROWS: number = 34;
@@ -187,8 +187,6 @@ export class TpFeatureExtractor {
       edgeDiff.push(TpFeatureExtractor.longEdge(gridDiff[f]));
     }
     const E = edgeAbs[0].length;
-    TpFeatureExtractor.robustUnitInPlace(edgeAbs);
-    TpFeatureExtractor.robustUnitInPlace(edgeDiff);
 
     const gMean: number[] = new Array(E).fill(0);
     for (let f = 0; f < F; f++) {
@@ -257,60 +255,16 @@ export class TpFeatureExtractor {
     }
     return out;
   }
-
-  /** Clip to p2–p98 of this window, then scale to [0, 1]. */
-  static robustUnitInPlace(frames: number[][]): void {
-    const vals: number[] = [];
-    for (let f = 0; f < frames.length; f++) {
-      const row = frames[f];
-      for (let i = 0; i < row.length; i++) {
-        vals.push(row[i]);
-      }
-    }
-    const pLo = TpFeatureExtractor.percentile(vals, 2);
-    let pHi = TpFeatureExtractor.percentile(vals, 98);
-    if (pHi <= pLo) {
-      pHi = pLo + 1;
-    }
-    const scale = pHi - pLo;
-    for (let f = 0; f < frames.length; f++) {
-      const row = frames[f];
-      for (let i = 0; i < row.length; i++) {
-        let v = (row[i] - pLo) / scale;
-        if (v < 0) {
-          v = 0;
-        } else if (v > 1) {
-          v = 1;
-        }
-        row[i] = v;
-      }
-    }
-  }
-
-  static percentile(values: number[], p: number): number {
-    const a = values.slice().sort((x: number, y: number) => x - y);
-    const n = a.length;
-    if (n === 0) {
-      return 0;
-    }
-    const idx = (p / 100) * (n - 1);
-    const lo = Math.floor(idx);
-    const hi = Math.ceil(idx);
-    if (lo === hi) {
-      return a[lo];
-    }
-    const w = idx - lo;
-    return a[lo] * (1 - w) + a[hi] * w;
-  }
 }
 ```
 
 ### 若你不想整文件替换，旧代码至少要改到
 
 1. 删掉「全网格 + LineData → 1127」的拼特征逻辑。  
-2. 增加 `EDGE_LAYERS=3`、`longEdge`、`robustUnitInPlace`、`percentile`。  
-3. `fromAbsoluteWindow`：**先** `longEdge`，**再**对 abs/diff 各 `robustUnitInPlace`，**再**按 3.6 顺序拼 1021 维。  
-4. 对外方法签名尽量保持 `fromAbsoluteWindow(gridAbs, lineAbs, gridDiff, lineDiff)`，这样 `TpPredictor` 可少改；`line*` 参数可忽略。
+2. 增加 `EDGE_LAYERS=3`、`longEdge`。  
+3. `fromAbsoluteWindow`：**只** `longEdge`，**不要** p2–p98，再按 3.6 顺序拼 1021 维。  
+4. 若旧代码里有 `robustUnitInPlace`，必须删掉调用。  
+5. 对外方法签名尽量保持 `fromAbsoluteWindow(gridAbs, lineAbs, gridDiff, lineDiff)`，这样 `TpPredictor` 可少改；`line*` 参数可忽略。
 
 ---
 
@@ -368,10 +322,10 @@ python -c "import json; d=json.load(open(r'entry/src/main/resources/rawfile/tp_m
 期望输出类似：
 
 ```text
-1021 True True 400
+1021 True False 400
 ```
 
-无 Python：直接搜文件里的 `"feature_dim"`，必须是 `1021`。
+无 Python：直接搜 `"feature_dim"` 必须是 `1021`，且 `"robust_p2_p98": false`。
 
 3. DevEco：**Clean Project** → Build → 安装。确认 rawfile 进包（曾出现「编译过但包内仍是旧 json」）。
 
@@ -414,7 +368,7 @@ tpPredictor.pushDiffFrame(flatDiff);
 | 现象 | 处理 |
 |------|------|
 | `feature dim 1021 != 1127` | 模型或特征仍一边旧：确认 rawfile 是 1021，且 `TpFeatures` 已按本文替换 |
-| 维数都 1021，预测全 `others` / 乱跳 | 缺窗内 2–98，或左右列取反，或送的不是差分 |
+| 维数都 1021，预测全 `others` / 乱跳 | 代码里仍做了 p2–p98，或左右列取反，或送的不是差分 |
 | Clean 后行为仍像旧包 | 确认安装的是新 HAP；核对设备上资源是否更新 |
 | 自己拼 1127 维喂新模型 | 禁止；必须走本文特征管线 |
 | 采集端先裁边再 `pushDiffFrame` | 禁止；送整帧 714（+55） |
@@ -423,9 +377,9 @@ tpPredictor.pushDiffFrame(flatDiff);
 
 ## 10. 验收检查单（做完打勾）
 
-- [ ] 收到的 `tp_model.json`：`feature_dim=1021`，`tp_edge_only=true`，`robust_p2_p98=true`
+- [ ] 收到的 `tp_model.json`：`feature_dim=1021`，`tp_edge_only=true`，**`robust_p2_p98=false`**
 - [ ] 已覆盖到 `rawfile/tp_model.json`
-- [ ] `TpFeatures.ets` 已按第 4 节更新（含 `longEdge` + `robustUnitInPlace`）
+- [ ] `TpFeatures.ets` 已按第 4 节更新（`longEdge`，**没有** p2–p98）
 - [ ] `TpPredictor`：11 帧窗 + 窗内 cumsum + 调 `fromAbsoluteWindow`
 - [ ] Clean + 全量重装
 - [ ] 运行时 `feats.length === 1021`
@@ -437,4 +391,4 @@ tpPredictor.pushDiffFrame(flatDiff);
 
 更新完成后可回：
 
-> rawfile `feature_dim=1021` 已确认；`TpFeatures` 已改为长边 3 + 窗内 p2–p98；运行时 feats=1021；Clean 重装完成。TP 回调已/未接到 `pushDiffFrame`。
+> rawfile `feature_dim=1021` 且 `robust_p2_p98=false` 已确认；`TpFeatures` 已改为长边 3 层且**没有** p2–p98；运行时 feats=1021；Clean 重装完成。TP 回调已/未接到 `pushDiffFrame`。

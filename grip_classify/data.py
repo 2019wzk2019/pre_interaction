@@ -14,25 +14,106 @@ from . import (
     FOLDER_TO_LABEL,
     HEAD_EXCLUDE_FOLDERS,
     HEAD_EXCLUDE_MS,
+    HOLDOUT_DIRNAME,
     LABEL_TO_ID,
     PRE_TAP_EXCLUDE_MS,
     SOURCE_FOLDERS,
+    TAIL_EXCLUDE_MS,
     TP_GRID_COLS,
     TP_GRID_ROWS,
+    TRAIN_DIRNAME,
 )
 
 _NUM_RE = re.compile(r"-?\d+")
+_IMU_SESSION_RE = re.compile(r"^imu_continuous(?: \((\d+)\))?\.csv$", re.IGNORECASE)
+
+
+def folder_class_name(folder_name: str) -> str:
+    """Map on-disk folder to class. 'c左to右' in 测试集 -> 左to右."""
+    if folder_name in FOLDER_TO_LABEL:
+        return FOLDER_TO_LABEL[folder_name]
+    if folder_name.startswith("c") and folder_name[1:] in FOLDER_TO_LABEL:
+        return FOLDER_TO_LABEL[folder_name[1:]]
+    raise KeyError(f"No class mapping for folder {folder_name!r}")
 
 
 def list_label_dirs(data_root: Path) -> Dict[str, Path]:
     root = Path(data_root)
-    found = {}
-    for name in SOURCE_FOLDERS:
-        p = root / name
-        if not p.is_dir():
-            raise FileNotFoundError(f"Missing source folder: {p}")
-        found[name] = p
+    train_root = root / TRAIN_DIRNAME if (root / TRAIN_DIRNAME).is_dir() else root
+    found = discover_recording_dirs(train_root, skip_names={HOLDOUT_DIRNAME})
+    missing = [n for n in SOURCE_FOLDERS if n not in found]
+    if missing:
+        print(f"[warn] expected train folders not found: {missing}")
+    if not found:
+        raise FileNotFoundError(f"No train recordings under {train_root}")
+    print(f"[train dirs] {train_root}: {list(found.keys())}")
     return found
+
+
+def list_holdout_dirs(test_root: Path) -> Dict[str, Path]:
+    root = Path(test_root)
+    if not root.is_dir():
+        raise FileNotFoundError(f"Missing holdout folder: {root}")
+    found = discover_recording_dirs(root)
+    if not found:
+        raise FileNotFoundError(f"No recordings under {root}")
+    print(f"[holdout dirs] {root}: {list(found.keys())}")
+    return found
+
+
+def discover_recording_dirs(
+    root: Path,
+    skip_names: Optional[set] = None,
+    max_depth: int = 4,
+) -> Dict[str, Path]:
+    """Find folders that contain imu_continuous*.csv + matching TP jsonl."""
+    skip_names = skip_names or set()
+    found: Dict[str, Path] = {}
+
+    def walk(path: Path, depth: int) -> None:
+        if depth > max_depth or not path.is_dir():
+            return
+        for child in sorted(path.iterdir(), key=lambda p: p.name):
+            if not child.is_dir() or child.name in skip_names:
+                continue
+            if list_recording_sessions(child):
+                if child.name in found:
+                    raise ValueError(f"duplicate recording folder name {child.name}")
+                found[child.name] = child
+            else:
+                walk(child, depth + 1)
+
+    walk(Path(root), 0)
+    return found
+
+
+def list_recording_sessions(folder: Path) -> List[Tuple[str, Path, Path, Path]]:
+    """
+    Pair IMU / TP / metadata files in a label folder.
+
+    Supports a single take (`imu_continuous.csv`) or Windows copy suffixes
+    (`imu_continuous (1).csv` ... `(n).csv`).
+    """
+    folder = Path(folder)
+    sessions = []
+    for imu_path in sorted(folder.iterdir()):
+        if not imu_path.is_file():
+            continue
+        m = _IMU_SESSION_RE.match(imu_path.name)
+        if not m:
+            continue
+        suffix = f" ({m.group(1)})" if m.group(1) else ""
+        sid = m.group(1) or "0"
+        tp_path = folder / f"diffdata_continuous{suffix}.jsonl"
+        meta_path = folder / f"collection_run_metadata{suffix}.json"
+        if not tp_path.is_file():
+            print(f"[skip] {imu_path.name}: missing {tp_path.name}")
+            continue
+        if imu_path.stat().st_size < 64 or tp_path.stat().st_size < 64:
+            print(f"[skip] empty session {imu_path.name}")
+            continue
+        sessions.append((sid, imu_path, tp_path, meta_path))
+    return sessions
 
 
 def load_imu(csv_path: Path) -> Dict[str, np.ndarray]:
@@ -173,19 +254,25 @@ def load_tap_times_ms(meta_path: Path) -> List[float]:
 def build_exclude_intervals(
     folder_name: str,
     t_start_ms: float,
+    t_end_ms: float,
     tap_times_ms: List[float],
+    class_name: Optional[str] = None,
 ) -> List[Tuple[float, float]]:
     """
     Windows overlapping these [start, end] intervals are dropped from the dataset.
 
-    - 左to右 / 右to左: drop the first HEAD_EXCLUDE_MS of the recording.
+    - Reach classes (左to右 / 右to左, including 测试集 c* folders): drop the first HEAD_EXCLUDE_MS.
     - Any recording: drop PRE_TAP_EXCLUDE_MS before each TP tap (finger down).
+    - Any recording: drop the last TAIL_EXCLUDE_MS (end of take is often messy).
     """
     intervals: List[Tuple[float, float]] = []
-    if folder_name in HEAD_EXCLUDE_FOLDERS:
+    reach = class_name in ("左to右", "右to左") or folder_name in HEAD_EXCLUDE_FOLDERS
+    if reach:
         intervals.append((float(t_start_ms), float(t_start_ms) + HEAD_EXCLUDE_MS))
     for tap in tap_times_ms:
         intervals.append((float(tap) - PRE_TAP_EXCLUDE_MS, float(tap)))
+    tail_start = float(t_end_ms) - TAIL_EXCLUDE_MS
+    intervals.append((tail_start, float(t_end_ms) + 1.0))
     intervals.sort()
     merged: List[Tuple[float, float]] = []
     for a, b in intervals:
@@ -209,38 +296,89 @@ def window_overlaps_excludes(
     return False
 
 
-def load_all_recordings(data_root: Path) -> Dict[str, dict]:
-    """Load IMU + reconstructed TP for every label folder."""
-    dirs = list_label_dirs(data_root)
+def _load_one_recording(
+    folder_name: str,
+    imu_path: Path,
+    tp_path: Path,
+    meta_path: Path,
+    session_id: str = "0",
+) -> dict:
+    imu = load_imu(imu_path)
+    tp_diff = load_tp_diff(tp_path)
+    grid_abs, line_abs = reconstruct_tp_absolute(
+        tp_diff["grid_diff"], tp_diff["line_diff"]
+    )
+    tap_times = load_tap_times_ms(meta_path) if meta_path.is_file() else []
+    t_start = float(min(imu["acc"][0, 0], imu["gyro"][0, 0], tp_diff["t_ms"][0]))
+    t_end = float(max(imu["acc"][-1, 0], imu["gyro"][-1, 0], tp_diff["t_ms"][-1]))
+    class_name = folder_class_name(folder_name)
+    excludes = build_exclude_intervals(
+        folder_name, t_start, t_end, tap_times, class_name=class_name
+    )
+    rec_name = folder_name if session_id == "0" else f"{folder_name}#{session_id}"
+    rec = {
+        "folder": rec_name,
+        "label": class_name,
+        "label_id": LABEL_TO_ID[class_name],
+        "imu": imu,
+        "tap_times_ms": tap_times,
+        "exclude_intervals": excludes,
+        "t_start_ms": t_start,
+        "t_end_ms": t_end,
+        "tp": {
+            "t_ms": tp_diff["t_ms"],
+            "grid_diff": tp_diff["grid_diff"],
+            "line_diff": tp_diff["line_diff"],
+            "grid_abs": grid_abs,
+            "line_abs": line_abs,
+            "poll_interval_ms": tp_diff["poll_interval_ms"],
+        },
+    }
+    dur_s = (t_end - t_start) / 1000.0
+    print(
+        f"[load] {rec_name} -> {class_name}: {dur_s:.1f}s acc={len(imu['acc'])} "
+        f"gyro={len(imu['gyro'])} tp={len(tp_diff['t_ms'])} frames taps={len(tap_times)} "
+        f"exclude={len(excludes)} (incl. last {TAIL_EXCLUDE_MS}ms)"
+    )
+    return rec
+
+
+def _load_folder_recordings(folder_name: str, folder: Path) -> Dict[str, dict]:
+    sessions = list_recording_sessions(folder)
+    if not sessions:
+        raise FileNotFoundError(f"No IMU+TP sessions in {folder}")
     out = {}
-    for folder_name, folder in dirs.items():
-        imu = load_imu(folder / "imu_continuous.csv")
-        tp_diff = load_tp_diff(folder / "diffdata_continuous.jsonl")
-        grid_abs, line_abs = reconstruct_tp_absolute(
-            tp_diff["grid_diff"], tp_diff["line_diff"]
-        )
-        tap_times = load_tap_times_ms(folder / "collection_run_metadata.json")
-        t_start = float(min(imu["acc"][0, 0], imu["gyro"][0, 0], tp_diff["t_ms"][0]))
-        excludes = build_exclude_intervals(folder_name, t_start, tap_times)
-        class_name = FOLDER_TO_LABEL[folder_name]
-        out[folder_name] = {
-            "folder": folder_name,
-            "label": class_name,
-            "label_id": LABEL_TO_ID[class_name],
-            "imu": imu,
-            "tap_times_ms": tap_times,
-            "exclude_intervals": excludes,
-            "tp": {
-                "t_ms": tp_diff["t_ms"],
-                "grid_diff": tp_diff["grid_diff"],
-                "line_diff": tp_diff["line_diff"],
-                "grid_abs": grid_abs,
-                "line_abs": line_abs,
-                "poll_interval_ms": tp_diff["poll_interval_ms"],
-            },
-        }
-        print(
-            f"[load] {folder_name} -> {class_name}: acc={len(imu['acc'])} gyro={len(imu['gyro'])} "
-            f"tp={len(tp_diff['t_ms'])} frames taps={len(tap_times)} exclude={len(excludes)}"
-        )
+    for sid, imu_path, tp_path, meta_path in sessions:
+        try:
+            rec = _load_one_recording(
+                folder_name, imu_path, tp_path, meta_path, session_id=sid
+            )
+        except Exception as e:
+            print(f"[skip] {imu_path}: {e}")
+            continue
+        out[rec["folder"]] = rec
+    if not out:
+        raise FileNotFoundError(f"No valid IMU+TP sessions in {folder}")
+    return out
+
+
+def load_all_recordings(data_root: Path) -> Dict[str, dict]:
+    """Load IMU + reconstructed TP for every training label folder (not 测试集)."""
+    dirs = list_label_dirs(data_root)
+    out: Dict[str, dict] = {}
+    for name, folder in dirs.items():
+        out.update(_load_folder_recordings(name, folder))
+    return out
+
+
+def load_holdout_recordings(test_root: Optional[Path] = None, data_root: Optional[Path] = None) -> Dict[str, dict]:
+    """Load Wzk/测试集 (or explicit test_root) as a held-out evaluation set."""
+    if test_root is None:
+        if data_root is None:
+            raise ValueError("need test_root or data_root")
+        test_root = Path(data_root) / HOLDOUT_DIRNAME
+    dirs = list_holdout_dirs(test_root)
+    out: Dict[str, dict] = {}
+    for name, folder in dirs.items():
+        out.update(_load_folder_recordings(name, folder))
     return out

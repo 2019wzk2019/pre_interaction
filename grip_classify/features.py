@@ -102,6 +102,39 @@ def imu_window_features(seq: np.ndarray) -> np.ndarray:
     return np.asarray(feats, dtype=np.float64)
 
 
+def extract_imu_windows(
+    recordings: dict,
+    window_ms: float = WINDOW_MS,
+    stride_ms: float = STRIDE_MS,
+    rate_hz: float = 100.0,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """All valid IMU windows (after exclude intervals)."""
+    X, y = [], []
+    for rec in recordings.values():
+        imu = rec["imu"]
+        label_id = rec["label_id"]
+        excludes = rec.get("exclude_intervals") or []
+        t_min = max(imu["acc"][0, 0], imu["gyro"][0, 0]) + window_ms
+        t_max = min(imu["acc"][-1, 0], imu["gyro"][-1, 0])
+        ends = np.arange(t_min, t_max + 1e-6, stride_ms)
+        n_skip = 0
+        for t_end in ends:
+            t_end = float(t_end)
+            if window_overlaps_excludes(t_end - window_ms, t_end, excludes):
+                n_skip += 1
+                continue
+            seq = resample_imu_window(imu, t_end, window_ms, rate_hz)
+            if seq is None:
+                continue
+            X.append(imu_window_features(seq))
+            y.append(label_id)
+        if n_skip:
+            print(f"[imu exclude] {rec.get('folder', '?')}: skipped {n_skip} windows")
+    if not X:
+        return np.zeros((0, 0), dtype=np.float64), np.zeros((0,), dtype=np.int64)
+    return np.asarray(X, dtype=np.float64), np.asarray(y, dtype=np.int64)
+
+
 def make_imu_dataset(
     recordings: dict,
     window_ms: float = WINDOW_MS,
@@ -109,11 +142,11 @@ def make_imu_dataset(
     rate_hz: float = 100.0,
     train_frac: float = 0.8,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Temporal split per label: first train_frac -> train, rest -> test."""
+    """Temporal split per recording: first train_frac -> train, rest -> test."""
     X_train, y_train, X_test, y_test = [], [], [], []
-    for label, rec in recordings.items():
+    for rec in recordings.values():
         imu = rec["imu"]
-        y = rec["label_id"]
+        label_id = rec["label_id"]
         excludes = rec.get("exclude_intervals") or []
         t_min = max(imu["acc"][0, 0], imu["gyro"][0, 0]) + window_ms
         t_max = min(imu["acc"][-1, 0], imu["gyro"][-1, 0])
@@ -131,10 +164,10 @@ def make_imu_dataset(
             feat = imu_window_features(seq)
             if t_end <= split_t:
                 X_train.append(feat)
-                y_train.append(y)
+                y_train.append(label_id)
             else:
                 X_test.append(feat)
-                y_test.append(y)
+                y_test.append(label_id)
         if n_skip:
             print(f"[imu exclude] {rec.get('folder', '?')}: skipped {n_skip} windows")
     return (
@@ -161,6 +194,15 @@ def _long_edge(grid: np.ndarray, layers: int = TP_EDGE_LAYERS) -> np.ndarray:
     return np.concatenate([grid[..., :layers], grid[..., -layers:]], axis=-1)
 
 
+def _robust_unit(x: np.ndarray, lo: float = 2.0, hi: float = 98.0) -> np.ndarray:
+    """Clip to [p_lo, p_hi] then scale to [0, 1]. Same idea as the GIF colormap."""
+    p_lo = float(np.percentile(x, lo))
+    p_hi = float(np.percentile(x, hi))
+    if p_hi <= p_lo:
+        p_hi = p_lo + 1.0
+    return np.clip((x - p_lo) / (p_hi - p_lo), 0.0, 1.0)
+
+
 def tp_window_features(
     grid_abs: np.ndarray,
     line_abs: np.ndarray,
@@ -168,6 +210,7 @@ def tp_window_features(
     line_diff: np.ndarray,
     idx_end: int,
     n_frames: int,
+    robust_p2_p98: bool = True,
 ) -> Optional[np.ndarray]:
     """
     Features for TP window ending at frame idx_end (inclusive), length n_frames.
@@ -175,13 +218,19 @@ def tp_window_features(
     Only the portrait long edges (left/right outermost TP_EDGE_LAYERS columns)
     are used. Inner cells and LineData are dropped to cut grip-noise in the
     center of the panel.
+
+    If robust_p2_p98: integrated levels and diffs are 2–98 percentile clipped
+    and scaled to [0, 1] inside the 150ms window.
     """
     i1 = idx_end + 1
     i0 = i1 - n_frames
     if i0 < 0:
         return None
-    g_raw = _long_edge(grid_abs[i0:i1])  # (F, H, 2*L)
+    g_raw = _long_edge(grid_abs[i0:i1])
     gd = _long_edge(grid_diff[i0:i1])
+    if robust_p2_p98:
+        g_raw = _robust_unit(g_raw)
+        gd = _robust_unit(gd)
 
     g = g_raw - g_raw.mean(axis=0, keepdims=True)
 
@@ -196,18 +245,62 @@ def tp_window_features(
     return np.asarray(feats, dtype=np.float64)
 
 
+def extract_tp_windows(
+    recordings: dict,
+    window_ms: float = WINDOW_MS,
+    stride_ms: float = STRIDE_MS,
+    robust_p2_p98: bool = True,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """All valid TP windows (after exclude intervals)."""
+    X, y = [], []
+    for rec in recordings.values():
+        tp = rec["tp"]
+        label_id = rec["label_id"]
+        t = tp["t_ms"]
+        dts = np.diff(t)
+        dt = float(np.median(dts)) if len(dts) else float(tp.get("poll_interval_ms", 14))
+        n_frames = max(3, int(round(window_ms / max(dt, 1.0))))
+        stride_frames = max(1, int(round(stride_ms / max(dt, 1.0))))
+        ends = list(range(n_frames - 1, len(t), stride_frames))
+        n_skip = 0
+        for idx_end in ends:
+            t0 = float(t[idx_end - n_frames + 1])
+            t1 = float(t[idx_end])
+            if window_overlaps_excludes(t0, t1, rec.get("exclude_intervals") or []):
+                n_skip += 1
+                continue
+            feat = tp_window_features(
+                tp["grid_abs"],
+                tp["line_abs"],
+                tp["grid_diff"],
+                tp["line_diff"],
+                idx_end,
+                n_frames,
+                robust_p2_p98=robust_p2_p98,
+            )
+            if feat is None:
+                continue
+            X.append(feat)
+            y.append(label_id)
+        if n_skip:
+            print(f"[tp exclude] {rec.get('folder', '?')}: skipped {n_skip} windows")
+    if not X:
+        return np.zeros((0, 0), dtype=np.float64), np.zeros((0,), dtype=np.int64)
+    return np.asarray(X, dtype=np.float64), np.asarray(y, dtype=np.int64)
+
+
 def make_tp_dataset(
     recordings: dict,
     window_ms: float = WINDOW_MS,
     stride_ms: float = STRIDE_MS,
     train_frac: float = 0.8,
+    robust_p2_p98: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     X_train, y_train, X_test, y_test = [], [], [], []
-    for label, rec in recordings.items():
+    for rec in recordings.values():
         tp = rec["tp"]
-        y = rec["label_id"]
+        label_id = rec["label_id"]
         t = tp["t_ms"]
-        # estimate frames in window from median dt
         dts = np.diff(t)
         dt = float(np.median(dts)) if len(dts) else float(tp.get("poll_interval_ms", 14))
         n_frames = max(3, int(round(window_ms / max(dt, 1.0))))
@@ -229,15 +322,16 @@ def make_tp_dataset(
                 tp["line_diff"],
                 idx_end,
                 n_frames,
+                robust_p2_p98=robust_p2_p98,
             )
             if feat is None:
                 continue
             if k < split_i:
                 X_train.append(feat)
-                y_train.append(y)
+                y_train.append(label_id)
             else:
                 X_test.append(feat)
-                y_test.append(y)
+                y_test.append(label_id)
         if n_skip:
             print(f"[tp exclude] {rec.get('folder', '?')}: skipped {n_skip} windows")
     return (
