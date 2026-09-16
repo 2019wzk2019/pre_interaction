@@ -6,7 +6,7 @@ LABEL_TO_ID = {name: i for i, name in enumerate(LABELS)}
 ID_TO_LABEL = {i: name for name, i in LABEL_TO_ID.items()}
 
 # On-disk folders under Wzk/. Static grips map to others.
-SOURCE_FOLDERS = ["左to右", "左", "左1", "右to左", "右", "右1"]
+SOURCE_FOLDERS = ["左to右", "左", "左1", "右to左", "右", "右1", "点击"]
 FOLDER_TO_LABEL = {
     "左to右": "左to右",
     "右to左": "右to左",
@@ -14,11 +14,14 @@ FOLDER_TO_LABEL = {
     "左1": "others",
     "右": "others",
     "右1": "others",
+    "点击": "others",
+    "others": "others",
 }
 
 WINDOW_MS = 150
 STRIDE_MS = 50
 HEAD_EXCLUDE_MS = 1000
+HEAD_EXCLUDE_MS_L2R = 5000  # 左to右 / c左to右: drop first 5s
 PRE_TAP_EXCLUDE_MS = 1000
 TAIL_EXCLUDE_MS = 3000
 HEAD_EXCLUDE_FOLDERS = ("左to右", "右to左")

@@ -14,6 +14,7 @@ from . import (
     FOLDER_TO_LABEL,
     HEAD_EXCLUDE_FOLDERS,
     HEAD_EXCLUDE_MS,
+    HEAD_EXCLUDE_MS_L2R,
     HOLDOUT_DIRNAME,
     LABEL_TO_ID,
     PRE_TAP_EXCLUDE_MS,
@@ -34,6 +35,8 @@ def folder_class_name(folder_name: str) -> str:
         return FOLDER_TO_LABEL[folder_name]
     if folder_name.startswith("c") and folder_name[1:] in FOLDER_TO_LABEL:
         return FOLDER_TO_LABEL[folder_name[1:]]
+    if folder_name.startswith("others"):
+        return "others"
     raise KeyError(f"No class mapping for folder {folder_name!r}")
 
 
@@ -257,22 +260,33 @@ def build_exclude_intervals(
     t_end_ms: float,
     tap_times_ms: List[float],
     class_name: Optional[str] = None,
+    skip_head_tail: bool = False,
 ) -> List[Tuple[float, float]]:
     """
     Windows overlapping these [start, end] intervals are dropped from the dataset.
 
-    - Reach classes (左to右 / 右to左, including 测试集 c* folders): drop the first HEAD_EXCLUDE_MS.
-    - Any recording: drop PRE_TAP_EXCLUDE_MS before each TP tap (finger down).
+    - 左to右 (incl. 测试集 c左to右): drop the first HEAD_EXCLUDE_MS_L2R (5s).
+    - 右to左 (incl. c右to左): drop the first HEAD_EXCLUDE_MS (1s).
+    - Non-click recordings: drop PRE_TAP_EXCLUDE_MS before each TP tap.
+    - 点击 / c点击: keep tap windows (they are the others-click class).
     - Any recording: drop the last TAIL_EXCLUDE_MS (end of take is often messy).
+    - Edge-to-tap slices (`sliceMeta.skipHeadTailExclude`): skip head/tail; keep pre-tap.
     """
     intervals: List[Tuple[float, float]] = []
     reach = class_name in ("左to右", "右to左") or folder_name in HEAD_EXCLUDE_FOLDERS
-    if reach:
-        intervals.append((float(t_start_ms), float(t_start_ms) + HEAD_EXCLUDE_MS))
-    for tap in tap_times_ms:
-        intervals.append((float(tap) - PRE_TAP_EXCLUDE_MS, float(tap)))
-    tail_start = float(t_end_ms) - TAIL_EXCLUDE_MS
-    intervals.append((tail_start, float(t_end_ms) + 1.0))
+    if not skip_head_tail:
+        if class_name == "左to右":
+            intervals.append((float(t_start_ms), float(t_start_ms) + HEAD_EXCLUDE_MS_L2R))
+        elif reach:
+            intervals.append((float(t_start_ms), float(t_start_ms) + HEAD_EXCLUDE_MS))
+    is_click = folder_name in ("点击", "c点击") or folder_name.endswith("点击")
+    if not is_click:
+        pre_tap = 80.0 if skip_head_tail else PRE_TAP_EXCLUDE_MS
+        for tap in tap_times_ms:
+            intervals.append((float(tap) - pre_tap, float(tap)))
+    if not skip_head_tail:
+        tail_start = float(t_end_ms) - TAIL_EXCLUDE_MS
+        intervals.append((tail_start, float(t_end_ms) + 1.0))
     intervals.sort()
     merged: List[Tuple[float, float]] = []
     for a, b in intervals:
@@ -312,8 +326,18 @@ def _load_one_recording(
     t_start = float(min(imu["acc"][0, 0], imu["gyro"][0, 0], tp_diff["t_ms"][0]))
     t_end = float(max(imu["acc"][-1, 0], imu["gyro"][-1, 0], tp_diff["t_ms"][-1]))
     class_name = folder_class_name(folder_name)
+    skip_head_tail = False
+    if meta_path.is_file():
+        with open(meta_path, encoding="utf-8") as f:
+            meta_obj = json.load(f)
+        skip_head_tail = bool((meta_obj.get("sliceMeta") or {}).get("skipHeadTailExclude"))
     excludes = build_exclude_intervals(
-        folder_name, t_start, t_end, tap_times, class_name=class_name
+        folder_name,
+        t_start,
+        t_end,
+        tap_times,
+        class_name=class_name,
+        skip_head_tail=skip_head_tail,
     )
     rec_name = folder_name if session_id == "0" else f"{folder_name}#{session_id}"
     rec = {

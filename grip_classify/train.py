@@ -68,6 +68,8 @@ def _xy_for_split(
     holdout: Optional[Dict],
     window_ms: float,
     robust_p2_p98: bool = True,
+    window_cumsum: bool = True,
+    edge_only: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, str]:
     if modality == "imu":
         if holdout:
@@ -77,14 +79,25 @@ def _xy_for_split(
         return (*make_imu_dataset(recordings, window_ms=window_ms), "temporal_80_20")
     if holdout:
         Xtr, ytr = extract_tp_windows(
-            recordings, window_ms=window_ms, robust_p2_p98=robust_p2_p98
+            recordings,
+            window_ms=window_ms,
+            robust_p2_p98=robust_p2_p98,
+            window_cumsum=window_cumsum,
+            edge_only=edge_only,
         )
         Xte, yte = extract_tp_windows(
-            holdout, window_ms=window_ms, robust_p2_p98=robust_p2_p98
+            holdout,
+            window_ms=window_ms,
+            robust_p2_p98=robust_p2_p98,
+            window_cumsum=window_cumsum,
+            edge_only=edge_only,
         )
         return Xtr, ytr, Xte, yte, "holdout"
     Xtr, ytr, Xte, yte = make_tp_dataset(
-        recordings, window_ms=window_ms, robust_p2_p98=robust_p2_p98
+        recordings,
+        window_ms=window_ms,
+        robust_p2_p98=robust_p2_p98,
+        window_cumsum=window_cumsum,
     )
     return Xtr, ytr, Xte, yte, "temporal_80_20"
 
@@ -139,14 +152,25 @@ def train_tp_model(
     recordings: Optional[Dict] = None,
     holdout_recordings: Optional[Dict] = None,
     robust_p2_p98: bool = True,
+    window_cumsum: bool = True,
     name_suffix: str = "",
+    edge_only: bool = True,
 ) -> Tuple[Pipeline, Dict]:
     if recordings is None:
         recordings = load_all_recordings(data_root)
     tag = "p2-p98" if robust_p2_p98 else "no-norm"
-    print(f"[tp] robust_p2_p98={robust_p2_p98} ({tag})")
+    print(
+        f"[tp] robust_p2_p98={robust_p2_p98} ({tag}) "
+        f"window_cumsum={window_cumsum} edge_only={edge_only}"
+    )
     Xtr, ytr, Xte, yte, split = _xy_for_split(
-        "tp", recordings, holdout_recordings, window_ms, robust_p2_p98=robust_p2_p98
+        "tp",
+        recordings,
+        holdout_recordings,
+        window_ms,
+        robust_p2_p98=robust_p2_p98,
+        window_cumsum=window_cumsum,
+        edge_only=edge_only,
     )
     print(
         f"[tp] split={split} train={len(ytr)} { _class_counts(ytr) } "
@@ -158,6 +182,8 @@ def train_tp_model(
     metrics = _eval(yte, pred)
     metrics["split"] = split
     metrics["robust_p2_p98"] = robust_p2_p98
+    metrics["window_cumsum"] = window_cumsum
+    metrics["tp_edge_only"] = bool(edge_only)
     print(classification_report(yte, pred, target_names=LABELS, digits=4, zero_division=0))
     print("confusion_matrix:\n", confusion_matrix(yte, pred, labels=list(range(len(LABELS)))))
 
@@ -172,9 +198,10 @@ def train_tp_model(
             "window_ms": window_ms,
             "modality": "tp",
             "feature_dim": int(Xtr.shape[1]),
-            "uses_cumsum_absolute": True,
+            "uses_cumsum_absolute": bool(window_cumsum),
+            "window_cumsum_only": bool(window_cumsum),
             "window_demean": True,
-            "tp_edge_only": True,
+            "tp_edge_only": bool(edge_only),
             "robust_p2_p98": robust_p2_p98,
             "eval_split": split,
         },

@@ -211,23 +211,29 @@ def tp_window_features(
     idx_end: int,
     n_frames: int,
     robust_p2_p98: bool = True,
+    window_cumsum: bool = True,
+    edge_only: bool = True,
 ) -> Optional[np.ndarray]:
     """
     Features for TP window ending at frame idx_end (inclusive), length n_frames.
 
-    Only the portrait long edges (left/right outermost TP_EDGE_LAYERS columns)
-    are used. Inner cells and LineData are dropped to cut grip-noise in the
-    center of the panel.
+    Default: only the portrait long edges (left/right outermost TP_EDGE_LAYERS
+    columns). If edge_only is False, use the full 34x21 grid. LineData is dropped.
 
-    If robust_p2_p98: integrated levels and diffs are 2–98 percentile clipped
+    If window_cumsum: levels = cumsum of raw diffs inside the window (default).
+    Else: levels = raw diffs themselves (no integral). grid_abs is ignored.
+
+    If robust_p2_p98: window levels and diffs are 2–98 percentile clipped
     and scaled to [0, 1] inside the 150ms window.
     """
     i1 = idx_end + 1
     i0 = i1 - n_frames
     if i0 < 0:
         return None
-    g_raw = _long_edge(grid_abs[i0:i1])
-    gd = _long_edge(grid_diff[i0:i1])
+    gd = grid_diff[i0:i1]
+    if edge_only:
+        gd = _long_edge(gd)
+    g_raw = np.cumsum(gd, axis=0) if window_cumsum else gd.copy()
     if robust_p2_p98:
         g_raw = _robust_unit(g_raw)
         gd = _robust_unit(gd)
@@ -250,6 +256,8 @@ def extract_tp_windows(
     window_ms: float = WINDOW_MS,
     stride_ms: float = STRIDE_MS,
     robust_p2_p98: bool = True,
+    window_cumsum: bool = True,
+    edge_only: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """All valid TP windows (after exclude intervals)."""
     X, y = [], []
@@ -277,6 +285,8 @@ def extract_tp_windows(
                 idx_end,
                 n_frames,
                 robust_p2_p98=robust_p2_p98,
+                window_cumsum=window_cumsum,
+                edge_only=edge_only,
             )
             if feat is None:
                 continue
@@ -295,6 +305,7 @@ def make_tp_dataset(
     stride_ms: float = STRIDE_MS,
     train_frac: float = 0.8,
     robust_p2_p98: bool = True,
+    window_cumsum: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     X_train, y_train, X_test, y_test = [], [], [], []
     for rec in recordings.values():
@@ -323,6 +334,7 @@ def make_tp_dataset(
                 idx_end,
                 n_frames,
                 robust_p2_p98=robust_p2_p98,
+                window_cumsum=window_cumsum,
             )
             if feat is None:
                 continue
