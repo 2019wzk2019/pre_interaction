@@ -8,9 +8,12 @@ train/  121 段，用来训练
   others空置    4 段  -> others
   others点击    1 段  -> others
 
-test/  2 段，用来留出评估，不参与训练
+test/  5 段，用来留出评估，不参与训练
   c左to右  1 段 -> 左to右
   c右to左  1 段 -> 右to左
+  c左      1 段 -> others
+  c右      1 段 -> others
+  c点击    1 段 -> others
 
 从仓库根目录重训（与 delivery/hap_delivery_DL 同一设定：1 帧、全屏、per-sample std）：
 
