@@ -19,7 +19,7 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from grip_classify import LABELS
 from grip_classify.data import load_all_recordings, load_holdout_recordings
-from grip_dl import EDGE_ONLY, GRID_H, GRID_W, N_CLASSES, N_FRAMES, WINDOW_MS
+from grip_dl import EDGE_ONLY, GRID_H, GRID_W, N_CLASSES
 from grip_dl.config import TrainConfig
 from grip_dl.dataset import dummy_batch, make_loader
 from grip_dl.export import export_onnx
@@ -75,7 +75,7 @@ def dry_run(cfg: TrainConfig) -> None:
         "edge_only": EDGE_ONLY,
         "n_params": count_params(model),
         "labels": list(LABELS),
-        "input_layout": "(B, T, H, W) = (B, 42, 34, 21)",
+        "input_layout": f"(B, T, H, W) = (B, {cfg.n_frames}, {GRID_H}, {GRID_W})",
         "trained": False,
     }
     (cfg.out_dir / "dryrun.json").write_text(
@@ -255,16 +255,16 @@ def run_train(cfg: TrainConfig) -> None:
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Full-grid TP ConvNet (34x21).")
     p.add_argument("--train", action="store_true", help="load data and fit")
-    p.add_argument("--train-root", type=Path, default=Path("数据集"))
-    p.add_argument("--test-root", type=Path, default=Path("Wzk") / "测试集")
-    p.add_argument("--out-dir", type=Path, default=Path("artifacts") / "exp_tp_dl_full")
+    p.add_argument("--train-root", type=Path, default=Path("data/tp/train"))
+    p.add_argument("--test-root", type=Path, default=Path("data/tp/test"))
+    p.add_argument("--out-dir", type=Path, default=Path("artifacts") / "exp_tp_dl_single")
     p.add_argument("--epochs", type=int, default=30)
     p.add_argument("--batch-size", type=int, default=64)
     p.add_argument("--lr", type=float, default=1e-3)
     p.add_argument("--device", type=str, default="auto", help="auto|cpu|cuda|cuda:0")
     p.add_argument("--num-workers", type=int, default=4)
-    p.add_argument("--n-frames", type=int, default=N_FRAMES)
-    p.add_argument("--window-ms", type=float, default=WINDOW_MS)
+    p.add_argument("--n-frames", type=int, default=1)
+    p.add_argument("--window-ms", type=float, default=0.0)
     return p.parse_args()
 
 

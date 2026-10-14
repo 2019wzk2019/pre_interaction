@@ -64,7 +64,7 @@ MD5 和“上午备份”一致，只说明 **文件没被更新**，不能用�
 `artifacts/tp_model.joblib` 已按新流程重训，但 **忘记/未执行** 把 joblib 导出进 rawfile：
 
 ```bash
-python sync_harmony_models.py
+python scripts/sync_harmony_models.py
 ```
 
 上次有人同步过一次，同步的是 **当时的 1127 维旧 joblib**；之后 joblib 更新了，JSON 没再同步，于是 HAP 一直装着旧文件。
@@ -81,7 +81,7 @@ python -c "import joblib; b=joblib.load('artifacts/tp_model.joblib'); print(b['f
 # 期望: 1021 True True
 
 # 2) 导出到鸿蒙 rawfile（覆盖 tp_model.json / imu_model.json）
-python sync_harmony_models.py
+python scripts/sync_harmony_models.py
 
 # 3) 再确认 rawfile
 python -c "import json; d=json.load(open(r'harmony_app/GripReachPredict/entry/src/main/resources/rawfile/tp_model.json',encoding='utf-8')); print(d['feature_dim'], d.get('tp_edge_only'), d.get('robust_p2_p98'))"
@@ -97,8 +97,8 @@ python -c "import json; d=json.load(open(r'harmony_app/GripReachPredict/entry/sr
 若本地没有新 joblib，先重训再同步：
 
 ```bash
-python train_grip_models.py --modality tp --window-ms 150
-python sync_harmony_models.py
+python scripts/train_grip_models.py --modality tp --window-ms 150
+python scripts/sync_harmony_models.py
 ```
 
 ---

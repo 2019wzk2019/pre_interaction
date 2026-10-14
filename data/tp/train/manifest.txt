@@ -1,0 +1,122 @@
+label	sid_name	dest	note	dur_s	n_tp	gif
+右to左	1.2.R_seg02	#0		15.00	1041	tp_gifs_1.2.R\1.2.R_seg02.gif
+右to左	1.2.R_seg03	#1 (1)		15.00	1040	tp_gifs_1.2.R\1.2.R_seg03.gif
+右to左	1.2.R_seg04	#2 (2)		15.00	1027	tp_gifs_1.2.R\1.2.R_seg04.gif
+右to左	1.2.R_seg05	#3 (3)		15.00	1033	tp_gifs_1.2.R\1.2.R_seg05.gif
+右to左	1.2.R_seg06	#4 (4)		15.00	1041	tp_gifs_1.2.R\1.2.R_seg06.gif
+右to左	1.2.R_seg07	#5 (5)		15.00	1032	tp_gifs_1.2.R\1.2.R_seg07.gif
+右to左	1.2.R_seg08	#6 (6)		15.00	1028	tp_gifs_1.2.R\1.2.R_seg08.gif
+右to左	1.2.R_seg09	#7 (7)		15.00	1031	tp_gifs_1.2.R\1.2.R_seg09.gif
+右to左	1.2.R_seg10	#8 (8)		15.00	1042	tp_gifs_1.2.R\1.2.R_seg10.gif
+右to左	1.2.R_seg11	#9 (9)		15.00	1031	tp_gifs_1.2.R\1.2.R_seg11.gif
+右to左	1.2.R_seg12	#10 (10)		15.00	1033	tp_gifs_1.2.R\1.2.R_seg12.gif
+左to右	1.3.L_seg01	#0		10.00	695	tp_gifs_1.3.L\1.3.L_seg01.gif
+左to右	1.3.L_seg02	#1 (1)		10.00	706	tp_gifs_1.3.L\1.3.L_seg02.gif
+左to右	1.3.L_seg03	#2 (2)		10.00	683	tp_gifs_1.3.L\1.3.L_seg03.gif
+左to右	1.3.L_seg04	#3 (3)		10.00	687	tp_gifs_1.3.L\1.3.L_seg04.gif
+左to右	1.3.L_seg05	#4 (4)		10.00	690	tp_gifs_1.3.L\1.3.L_seg05.gif
+左to右	1.3.L_seg06	#5 (5)		10.00	693	tp_gifs_1.3.L\1.3.L_seg06.gif
+左to右	1.3.L_seg07	#6 (6)		10.00	685	tp_gifs_1.3.L\1.3.L_seg07.gif
+左to右	1.3.L_seg08	#7 (7)		10.00	685	tp_gifs_1.3.L\1.3.L_seg08.gif
+左to右	1.3.L_seg09	#8 (8)		10.00	685	tp_gifs_1.3.L\1.3.L_seg09.gif
+左to右	1.3.L_seg10	#9 (9)		10.00	676	tp_gifs_1.3.L\1.3.L_seg10.gif
+左to右	1.3.L_seg11	#10 (10)		10.00	697	tp_gifs_1.3.L\1.3.L_seg11.gif
+左to右	1.3.L_seg12	#11 (11)		10.00	692	tp_gifs_1.3.L\1.3.L_seg12.gif
+右to左	1.3.R_seg01	#11 (11)		10.00	688	tp_gifs_1.3.R\1.3.R_seg01.gif
+右to左	1.3.R_seg02	#12 (12)		10.00	685	tp_gifs_1.3.R\1.3.R_seg02.gif
+右to左	1.3.R_seg03	#13 (13)		10.00	686	tp_gifs_1.3.R\1.3.R_seg03.gif
+右to左	1.3.R_seg04	#14 (14)		10.00	671	tp_gifs_1.3.R\1.3.R_seg04.gif
+右to左	1.3.R_seg05	#15 (15)		10.00	679	tp_gifs_1.3.R\1.3.R_seg05.gif
+右to左	1.3.R_seg06	#16 (16)		10.00	675	tp_gifs_1.3.R\1.3.R_seg06.gif
+右to左	1.3.R_seg07	#17 (17)		10.00	673	tp_gifs_1.3.R\1.3.R_seg07.gif
+右to左	1.3.R_seg08	#18 (18)		10.00	681	tp_gifs_1.3.R\1.3.R_seg08.gif
+右to左	1.3.R_seg09	#19 (19)		10.00	684	tp_gifs_1.3.R\1.3.R_seg09.gif
+右to左	1.3.R_seg10	#20 (20)		10.00	679	tp_gifs_1.3.R\1.3.R_seg10.gif
+右to左	1.3.R_seg11	#21 (21)		10.00	686	tp_gifs_1.3.R\1.3.R_seg11.gif
+右to左	1.3.R_seg12	#22 (22)		10.00	680	tp_gifs_1.3.R\1.3.R_seg12.gif
+左to右	1.4.L_seg01	#12 (12)		10.00	675	tp_gifs_1.4.L\1.4.L_seg01.gif
+左to右	1.4.L_seg02	#13 (13)		10.00	680	tp_gifs_1.4.L\1.4.L_seg02.gif
+左to右	1.4.L_seg03	#14 (14)		10.00	690	tp_gifs_1.4.L\1.4.L_seg03.gif
+左to右	1.4.L_seg04	#15 (15)		10.00	690	tp_gifs_1.4.L\1.4.L_seg04.gif
+左to右	1.4.L_seg05	#16 (16)	去掉最后4s数据	6.00	409	tp_gifs_1.4.L\1.4.L_seg05去掉最后4s数据.gif
+左to右	1.4.L_seg07	#17 (17)	去掉最后4s数据	6.00	403	tp_gifs_1.4.L\1.4.L_seg07去掉最后4s数据.gif
+左to右	1.4.L_seg09	#18 (18)		10.00	674	tp_gifs_1.4.L\1.4.L_seg09.gif
+左to右	1.4.L_seg10	#19 (19)		10.00	683	tp_gifs_1.4.L\1.4.L_seg10.gif
+左to右	1.4.L_seg11	#20 (20)		10.00	687	tp_gifs_1.4.L\1.4.L_seg11.gif
+左to右	1.4.L_seg12	#21 (21)		10.00	679	tp_gifs_1.4.L\1.4.L_seg12.gif
+右to左	1.4.R_seg04	#23 (23)	去掉最后4s数据	6.00	406	tp_gifs_1.4.R\1.4.R_seg04去掉最后4s数据.gif
+右to左	1.4.R_seg05	#24 (24)	去掉最后2s数据	8.00	545	tp_gifs_1.4.R\1.4.R_seg05去掉最后2s数据.gif
+右to左	1.4.R_seg06	#25 (25)	去掉最后4s数据	6.00	417	tp_gifs_1.4.R\1.4.R_seg06去掉最后4s数据.gif
+右to左	1.4.R_seg07	#26 (26)	去掉最后4s数据	6.00	410	tp_gifs_1.4.R\1.4.R_seg07去掉最后4s数据.gif
+右to左	1.4.R_seg08	#27 (27)	去掉最后2s数据	8.00	545	tp_gifs_1.4.R\1.4.R_seg08去掉最后2s数据.gif
+右to左	1.4.R_seg09	#28 (28)		10.00	696	tp_gifs_1.4.R\1.4.R_seg09.gif
+右to左	1.4.R_seg10	#29 (29)		10.00	673	tp_gifs_1.4.R\1.4.R_seg10.gif
+右to左	1.4.R_seg11	#30 (30)	去掉最后4s数据	6.00	410	tp_gifs_1.4.R\1.4.R_seg11去掉最后4s数据.gif
+左to右	1.5.L_seg01	#22 (22)		10.00	677	tp_gifs_1.5.L\1.5.L_seg01.gif
+左to右	1.5.L_seg02	#23 (23)		10.00	682	tp_gifs_1.5.L\1.5.L_seg02.gif
+左to右	1.5.L_seg03	#24 (24)		10.00	673	tp_gifs_1.5.L\1.5.L_seg03.gif
+左to右	1.5.L_seg04	#25 (25)		10.00	682	tp_gifs_1.5.L\1.5.L_seg04.gif
+左to右	1.5.L_seg05	#26 (26)		10.00	675	tp_gifs_1.5.L\1.5.L_seg05.gif
+左to右	1.5.L_seg06	#27 (27)		10.00	667	tp_gifs_1.5.L\1.5.L_seg06.gif
+左to右	1.5.L_seg08	#28 (28)		10.00	666	tp_gifs_1.5.L\1.5.L_seg08.gif
+左to右	1.5.L_seg09	#29 (29)		10.00	667	tp_gifs_1.5.L\1.5.L_seg09.gif
+左to右	1.5.L_seg10	#30 (30)		10.00	674	tp_gifs_1.5.L\1.5.L_seg10.gif
+左to右	1.5.L_seg11	#31 (31)		10.00	667	tp_gifs_1.5.L\1.5.L_seg11.gif
+左to右	1.5.L_seg12	#32 (32)		10.00	676	tp_gifs_1.5.L\1.5.L_seg12.gif
+右to左	1.5.R_seg01	#31 (31)		10.00	670	tp_gifs_1.5.R\1.5.R_seg01.gif
+右to左	1.5.R_seg02	#32 (32)		10.00	668	tp_gifs_1.5.R\1.5.R_seg02.gif
+右to左	1.5.R_seg03	#33 (33)		10.00	670	tp_gifs_1.5.R\1.5.R_seg03.gif
+右to左	1.5.R_seg04	#34 (34)		10.00	664	tp_gifs_1.5.R\1.5.R_seg04.gif
+右to左	1.5.R_seg05	#35 (35)		10.00	681	tp_gifs_1.5.R\1.5.R_seg05.gif
+右to左	1.5.R_seg06	#36 (36)		10.00	662	tp_gifs_1.5.R\1.5.R_seg06.gif
+右to左	1.5.R_seg07	#37 (37)		10.00	670	tp_gifs_1.5.R\1.5.R_seg07.gif
+右to左	1.5.R_seg08	#38 (38)		10.00	670	tp_gifs_1.5.R\1.5.R_seg08.gif
+右to左	1.5.R_seg09	#39 (39)		10.00	663	tp_gifs_1.5.R\1.5.R_seg09.gif
+右to左	1.5.R_seg10	#40 (40)		10.00	659	tp_gifs_1.5.R\1.5.R_seg10.gif
+右to左	1.5.R_seg11	#41 (41)		10.00	666	tp_gifs_1.5.R\1.5.R_seg11.gif
+右to左	1.5.R_seg12	#42 (42)		10.00	672	tp_gifs_1.5.R\1.5.R_seg12.gif
+左to右	2.3.L_seg01	#33 (33)		10.00	678	tp_gifs_2.3.L\2.3.L_seg01.gif
+左to右	2.3.L_seg02	#34 (34)		10.00	673	tp_gifs_2.3.L\2.3.L_seg02.gif
+左to右	2.3.L_seg03	#35 (35)		10.00	701	tp_gifs_2.3.L\2.3.L_seg03.gif
+左to右	2.3.L_seg04	#36 (36)		10.00	707	tp_gifs_2.3.L\2.3.L_seg04.gif
+左to右	2.3.L_seg05	#37 (37)		10.00	693	tp_gifs_2.3.L\2.3.L_seg05.gif
+左to右	2.3.L_seg06	#38 (38)		10.00	690	tp_gifs_2.3.L\2.3.L_seg06.gif
+左to右	2.3.L_seg07	#39 (39)		10.00	679	tp_gifs_2.3.L\2.3.L_seg07.gif
+左to右	2.3.L_seg08	#40 (40)		10.00	679	tp_gifs_2.3.L\2.3.L_seg08.gif
+左to右	2.3.L_seg09	#41 (41)		10.00	702	tp_gifs_2.3.L\2.3.L_seg09.gif
+左to右	2.3.L_seg10	#42 (42)		10.00	691	tp_gifs_2.3.L\2.3.L_seg10.gif
+左to右	2.3.L_seg11	#43 (43)		10.00	678	tp_gifs_2.3.L\2.3.L_seg11.gif
+左to右	2.3.L_seg12	#44 (44)		10.00	687	tp_gifs_2.3.L\2.3.L_seg12.gif
+右to左	2.3.R_seg01	#43 (43)		10.00	695	tp_gifs_2.3.R\2.3.R_seg01.gif
+右to左	2.3.R_seg02	#44 (44)		10.00	687	tp_gifs_2.3.R\2.3.R_seg02.gif
+右to左	2.3.R_seg03	#45 (45)		10.00	687	tp_gifs_2.3.R\2.3.R_seg03.gif
+右to左	2.3.R_seg04	#46 (46)		10.00	690	tp_gifs_2.3.R\2.3.R_seg04.gif
+右to左	2.3.R_seg05	#47 (47)		10.00	685	tp_gifs_2.3.R\2.3.R_seg05.gif
+右to左	2.3.R_seg06	#48 (48)		10.00	689	tp_gifs_2.3.R\2.3.R_seg06.gif
+右to左	2.3.R_seg07	#49 (49)		10.00	678	tp_gifs_2.3.R\2.3.R_seg07.gif
+右to左	2.3.R_seg08	#50 (50)		10.00	696	tp_gifs_2.3.R\2.3.R_seg08.gif
+右to左	2.3.R_seg09	#51 (51)		10.00	688	tp_gifs_2.3.R\2.3.R_seg09.gif
+右to左	2.3.R_seg10	#52 (52)		10.00	690	tp_gifs_2.3.R\2.3.R_seg10.gif
+右to左	2.3.R_seg11	#53 (53)		10.00	689	tp_gifs_2.3.R\2.3.R_seg11.gif
+右to左	2.3.R_seg12	#54 (54)		10.00	689	tp_gifs_2.3.R\2.3.R_seg12.gif
+右to左	右to左_s00	#55 (55)	去掉最后5s	26.58	1900	tp_gifs_wzk_train\右to左\右to左_s00去掉最后5s.gif
+右to左	右to左_s01	#56 (56)	去掉最后5s	28.26	2036	tp_gifs_wzk_train\右to左\右to左_s01去掉最后5s.gif
+右to左	右to左_s02	#57 (57)	去掉最后5s	28.21	2019	tp_gifs_wzk_train\右to左\右to左_s02去掉最后5s.gif
+右to左	右to左_s03	#58 (58)	去掉最后5s	32.02	2284	tp_gifs_wzk_train\右to左\右to左_s03去掉最后5s.gif
+右to左	右to左_s04	#59 (59)	去掉最后5s	26.85	1921	tp_gifs_wzk_train\右to左\右to左_s04去掉最后5s.gif
+右to左	右to左_s05	#60 (60)	去掉最后5s	26.52	1881	tp_gifs_wzk_train\右to左\右to左_s05去掉最后5s.gif
+左to右	左to右_s00	#50 (50)	去掉前后5s	21.63	1557	tp_gifs_wzk_train\左to右\左to右_s00去掉前后5s.gif
+左to右	左to右_s01	#51 (51)	去掉前后5s.	10.47	741	tp_gifs_wzk_train\左to右\左to右_s01去掉前后5s..gif
+左to右	左to右_s03	#52 (52)	去掉前后5s.	14.76	1031	tp_gifs_wzk_train\左to右\左to右_s03去掉前后5s..gif
+左to右	左to右_s04	#53 (53)	去掉前后5s.	20.41	1463	tp_gifs_wzk_train\左to右\左to右_s04去掉前后5s..gif
+左to右	左to右_s05	#54 (54)	去掉前后5s.	21.70	1552	tp_gifs_wzk_train\左to右\左to右_s05去掉前后5s..gif
+左to右	左to右_s06	#55 (55)	去掉前后5s.	20.24	1444	tp_gifs_wzk_train\左to右\左to右_s06去掉前后5s..gif
+左to右	左to右_s07	#56 (56)	去掉前后5s.	33.83	2413	tp_gifs_wzk_train\左to右\左to右_s07去掉前后5s..gif
+左to右	左to右_s08	#57 (57)	去掉前后5s.	40.53	2907	tp_gifs_wzk_train\左to右\左to右_s08去掉前后5s..gif
+左to右	左to右_s13	#58 (58)		8.58	599	tp_gifs_wzk_train\左to右\左to右_s13.gif
+左to右	左to右_s14	#59 (59)	去掉最后5s	43.47	3111	tp_gifs_wzk_train\左to右\左to右_s14去掉最后5s.gif
+others空置	wzk_左_s00	#0		70.23	4528	
+others空置	wzk_右_s00	#1 (1)		70.96	4733	
+others空置	wzk_左1_s00	#2 (2)		74.31	4889	
+others空置	wzk_右1_s00	#3 (3)		77.39	5239	
+others点击	wzk_点击_s00	#0		42.45	2939	

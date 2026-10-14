@@ -18,7 +18,6 @@ from . import (
     HOLDOUT_DIRNAME,
     LABEL_TO_ID,
     PRE_TAP_EXCLUDE_MS,
-    SOURCE_FOLDERS,
     TAIL_EXCLUDE_MS,
     TP_GRID_COLS,
     TP_GRID_ROWS,
@@ -44,9 +43,12 @@ def list_label_dirs(data_root: Path) -> Dict[str, Path]:
     root = Path(data_root)
     train_root = root / TRAIN_DIRNAME if (root / TRAIN_DIRNAME).is_dir() else root
     found = discover_recording_dirs(train_root, skip_names={HOLDOUT_DIRNAME})
-    missing = [n for n in SOURCE_FOLDERS if n not in found]
+    required = {"左to右": ("左to右", "c左to右"), "右to左": ("右to左", "c右to左")}
+    missing = [lab for lab, names in required.items() if not any(n in found for n in names)]
+    if not any(name.startswith("others") or name in ("左", "左1", "右", "右1", "点击") for name in found):
+        missing.append("others")
     if missing:
-        print(f"[warn] expected train folders not found: {missing}")
+        print(f"[warn] expected train classes not found: {missing}")
     if not found:
         raise FileNotFoundError(f"No train recordings under {train_root}")
     print(f"[train dirs] {train_root}: {list(found.keys())}")

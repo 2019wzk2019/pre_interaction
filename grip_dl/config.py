@@ -6,12 +6,12 @@ from pathlib import Path
 
 @dataclass
 class TrainConfig:
-    train_root: Path = Path("数据集")
-    test_root: Path = Path("Wzk") / "测试集"
-    out_dir: Path = Path("artifacts") / "exp_tp_dl_full"
-    window_ms: float = 500.0
+    train_root: Path = Path("data/tp/train")
+    test_root: Path = Path("data/tp/test")
+    out_dir: Path = Path("artifacts") / "exp_tp_dl_single"
+    window_ms: float = 0.0
     stride_ms: float = 50.0
-    n_frames: int = 42
+    n_frames: int = 1
     batch_size: int = 64
     epochs: int = 30
     lr: float = 1e-3

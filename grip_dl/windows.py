@@ -1,4 +1,7 @@
-"""500ms edge-TP sequence windows for the DL model (raw diffs, no RF stats)."""
+"""TP frame windows for the DL model (raw diffs, no RF stats).
+
+Default shipped model uses one raw frame. window_ms>0 keeps the older resampled windows.
+"""
 
 from __future__ import annotations
 
@@ -42,15 +45,29 @@ def extract_tp_sequences(
     """
     xs: List[np.ndarray] = []
     ys: List[int] = []
+    single_frame = n_frames == 1 and window_ms <= 0
     for rec in recordings.values():
         tp = rec["tp"]
         label_id = int(rec["label_id"])
         t = tp["t_ms"]
+        grid_diff = tp["grid_diff"]
+        excludes = rec.get("exclude_intervals") or []
+        if single_frame:
+            n_skip = 0
+            for i, ts in enumerate(t):
+                ts = float(ts)
+                if window_overlaps_excludes(ts, ts, excludes):
+                    n_skip += 1
+                    continue
+                xs.append(np.ascontiguousarray(grid_diff[i : i + 1], dtype=np.float32))
+                ys.append(label_id)
+            if n_skip:
+                print(f"[tp exclude] {rec.get('folder', '?')}: skipped {n_skip} frames")
+            continue
         dts = np.diff(t)
         dt = float(np.median(dts)) if len(dts) else float(tp.get("poll_interval_ms", 14))
         win_frames = max(3, int(round(window_ms / max(dt, 1.0))))
         stride_frames = max(1, int(round(stride_ms / max(dt, 1.0))))
-        grid_diff = tp["grid_diff"]
         n_skip = 0
         for idx_end in range(win_frames - 1, len(t), stride_frames):
             i0 = idx_end - win_frames + 1

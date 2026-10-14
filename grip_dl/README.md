@@ -1,48 +1,43 @@
-# TP deep learning (full 34×21)
+# TP deep learning (full 34×21, single frame)
 
-Branch: `feat/tp-dl`. Replaces RF handcrafted features with a small ConvNet over
-raw first-order TP diffs for the full grid (not edge-only).
+Shipped model: `delivery/hap_delivery_DL`. One raw diff frame, full grid, per-sample std.
 
 ## Input contract
 
 | item | value |
 |------|-------|
-| window | 500 ms |
-| frames | 42 (time-resampled) |
-| grid | 34 × 21 |
-| tensor | `(B, T, H, W) = (B, 42, 34, 21)` |
+| window | 1 frame (`window_ms=0`) |
+| tensor | `(B, T, H, W) = (B, 1, 34, 21)` |
 | labels | `左to右` / `右to左` / `others` |
-| train data | `数据集/` |
-| eval data | `Wzk/测试集` |
+| train | `data/tp/train` |
+| eval | `data/tp/test` |
 
-## Setup (server)
+## Setup
 
 ```bash
 pip install -r requirements-dl.txt
-# GPU PyTorch: install the CUDA wheel for your driver, then the rest of requirements-dl.txt
 ```
 
-## Dry-run (no training)
+## Dry-run
 
 ```bash
-python train_tp_dl.py
+python scripts/train_tp_dl.py
 ```
 
-Checks forward shape, param count, and writes a dummy ONNX under `artifacts/exp_tp_dl_full/`.
-
-## Train on GPU
+## Train
 
 ```bash
-python train_tp_dl.py --train --device auto --epochs 30 --batch-size 64 --num-workers 4
+python scripts/train_tp_dl.py --train --device auto --epochs 30 --batch-size 64 --num-workers 4
 ```
 
-Artifacts:
+Artifacts in `artifacts/exp_tp_dl_single/`:
 
-- `artifacts/exp_tp_dl_full/tp_grid_net.pt` — best checkpoint by holdout acc
-- `artifacts/exp_tp_dl_full/tp_grid_net.onnx` — ONNX export of best
-- `artifacts/exp_tp_dl_full/metrics.json` — report + confusion matrix + per-folder
+- `tp_grid_net.pt`
+- `tp_grid_net.onnx`
+- `metrics.json`
 
-## Model
+The older 500 ms / 42-frame run is:
 
-`TpGridNet`: Conv2d stack with **time as channels** (keeps full spatial layout, ONNX-friendly).
-About ~200k params (see dry-run output).
+```bash
+python scripts/train_tp_dl.py --train --n-frames 42 --window-ms 500 --out-dir artifacts/exp_tp_dl_full
+```

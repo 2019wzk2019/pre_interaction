@@ -1,0 +1,265 @@
+{
+  "window_ms": 100,
+  "window_acc": 0.9341402634389463,
+  "file_vote_acc": 0.95,
+  "best_epoch": 6,
+  "n_train": 6698,
+  "n_test": 2809,
+  "counts_train": [
+    883,
+    669,
+    5146
+  ],
+  "counts_test": [
+    356,
+    287,
+    2166
+  ],
+  "classification_report": {
+    "左to右": {
+      "precision": 0.7426160337552743,
+      "recall": 0.9887640449438202,
+      "f1-score": 0.8481927710843373,
+      "support": 356.0
+    },
+    "右to左": {
+      "precision": 0.8313953488372093,
+      "recall": 0.9965156794425087,
+      "f1-score": 0.9064976228209192,
+      "support": 287.0
+    },
+    "others": {
+      "precision": 0.9974886991461577,
+      "recall": 0.9168975069252078,
+      "f1-score": 0.9554967524657205,
+      "support": 2166.0
+    },
+    "accuracy": 0.9341402634389463,
+    "macro avg": {
+      "precision": 0.8571666939128804,
+      "recall": 0.9673924104371788,
+      "f1-score": 0.9033957154569924,
+      "support": 2809.0
+    },
+    "weighted avg": {
+      "precision": 0.9482172643231522,
+      "recall": 0.9341402634389463,
+      "f1-score": 0.9368912104294691,
+      "support": 2809.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      352,
+      0,
+      4
+    ],
+    [
+      0,
+      286,
+      1
+    ],
+    [
+      122,
+      58,
+      1986
+    ]
+  ],
+  "by_file": {
+    "l2r_L2R_20260920_105132_016_tp.csv|左to右": {
+      "true": "左to右",
+      "pred_vote": "左to右",
+      "n": 46,
+      "win_acc": 1.0
+    },
+    "l2r_L2R_20260920_111200_888_tp.csv|左to右": {
+      "true": "左to右",
+      "pred_vote": "左to右",
+      "n": 83,
+      "win_acc": 0.9518072289156626
+    },
+    "l2r_L2R_20260920_111209_077_tp.csv|左to右": {
+      "true": "左to右",
+      "pred_vote": "左to右",
+      "n": 53,
+      "win_acc": 1.0
+    },
+    "l2r_OTHERS_20260920_111347_854_tp.csv|others": {
+      "true": "others",
+      "pred_vote": "others",
+      "n": 822,
+      "win_acc": 0.9172749391727494
+    },
+    "l2r_R2L_20260920_111254_937_tp.csv|右to左": {
+      "true": "右to左",
+      "pred_vote": "右to左",
+      "n": 38,
+      "win_acc": 1.0
+    },
+    "l2r_R2L_20260920_111308_404_tp.csv|右to左": {
+      "true": "右to左",
+      "pred_vote": "右to左",
+      "n": 37,
+      "win_acc": 1.0
+    },
+    "l2r_R2L_20260920_111333_157_tp.csv|右to左": {
+      "true": "右to左",
+      "pred_vote": "右to左",
+      "n": 35,
+      "win_acc": 1.0
+    },
+    "test_L2R_20260920_154236_203_tp.csv|others": {
+      "true": "others",
+      "pred_vote": "others",
+      "n": 89,
+      "win_acc": 0.797752808988764
+    },
+    "test_L2R_20260920_154236_203_tp.csv|左to右": {
+      "true": "左to右",
+      "pred_vote": "左to右",
+      "n": 69,
+      "win_acc": 1.0
+    },
+    "test_L2R_20260920_154353_761_tp.csv|others": {
+      "true": "others",
+      "pred_vote": "左to右",
+      "n": 77,
+      "win_acc": 0.44155844155844154
+    },
+    "test_L2R_20260920_154353_761_tp.csv|左to右": {
+      "true": "左to右",
+      "pred_vote": "左to右",
+      "n": 51,
+      "win_acc": 1.0
+    },
+    "test_L2R_20260920_154400_944_tp.csv|others": {
+      "true": "others",
+      "pred_vote": "others",
+      "n": 74,
+      "win_acc": 0.6756756756756757
+    },
+    "test_L2R_20260920_154400_944_tp.csv|左to右": {
+      "true": "左to右",
+      "pred_vote": "左to右",
+      "n": 54,
+      "win_acc": 1.0
+    },
+    "test_OTHERS_20260920_154537_198_tp.csv|others": {
+      "true": "others",
+      "pred_vote": "others",
+      "n": 857,
+      "win_acc": 0.9941656942823804
+    },
+    "test_R2L_20260920_154421_880_tp.csv|others": {
+      "true": "others",
+      "pred_vote": "others",
+      "n": 77,
+      "win_acc": 1.0
+    },
+    "test_R2L_20260920_154421_880_tp.csv|右to左": {
+      "true": "右to左",
+      "pred_vote": "右to左",
+      "n": 62,
+      "win_acc": 1.0
+    },
+    "test_R2L_20260920_154429_541_tp.csv|others": {
+      "true": "others",
+      "pred_vote": "others",
+      "n": 88,
+      "win_acc": 0.9772727272727273
+    },
+    "test_R2L_20260920_154429_541_tp.csv|右to左": {
+      "true": "右to左",
+      "pred_vote": "右to左",
+      "n": 70,
+      "win_acc": 0.9857142857142858
+    },
+    "test_R2L_20260920_154504_066_tp.csv|others": {
+      "true": "others",
+      "pred_vote": "others",
+      "n": 82,
+      "win_acc": 0.7560975609756098
+    },
+    "test_R2L_20260920_154504_066_tp.csv|右to左": {
+      "true": "右to左",
+      "pred_vote": "右to左",
+      "n": 45,
+      "win_acc": 1.0
+    }
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.16933599197622484,
+      "test_acc": 0.7369170523317907
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.06942975877042527,
+      "test_acc": 0.8608045567817729
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.050572485743920884,
+      "test_acc": 0.7735849056603774
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.046330387147894884,
+      "test_acc": 0.8896404414382343
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.04457297967009916,
+      "test_acc": 0.8045567817728729
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.03389627447646032,
+      "test_acc": 0.9341402634389463
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.030730668656143118,
+      "test_acc": 0.8636525453898184
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.025793748663303993,
+      "test_acc": 0.8579565681737273
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.02727788590227367,
+      "test_acc": 0.8401566393734425
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.025474575626010073,
+      "test_acc": 0.8736205055179779
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.022575058966817232,
+      "test_acc": 0.8718405126379495
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.024540218998221685,
+      "test_acc": 0.902812388750445
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.017929832585640952,
+      "test_acc": 0.9099323602705589
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.02358918860120875,
+      "test_acc": 0.9067283730865077
+    }
+  ],
+  "n_params": 30307,
+  "n_old": 21,
+  "n_twophase": 21
+}
